@@ -1,0 +1,27 @@
+name: Docker Push
+
+on:
+  push:
+    branches: [main]
+
+jobs:
+  push:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Set short SHA and timestamp
+        run: |
+          SHORT_SHA=$(echo "${{ github.sha }}" | cut -c1-7)
+          TIMESTAMP=$(date -u +"%Y%m%d-%H%M")
+          IMAGE_TAG="$SHORT_SHA-$TIMESTAMP"
+          echo "IMAGE_TAG=$IMAGE_TAG" >> $GITHUB_ENV
+
+      - name: Log in to Docker Hub
+        run: echo "${{ secrets.DOCKER_PASSWORD }}" | docker login -u "${{ secrets.DOCKER_USERNAME }}" --password-stdin
+
+      - name: Build and Push with commit+timestamp tag
+        run: |
+          echo "→ Pushing to: ${{ secrets.DOCKER_USERNAME }}/2025cloud:$IMAGE_TAG"
+          docker build -t ${{ secrets.DOCKER_USERNAME }}/2025cloud:$IMAGE_TAG .
+          docker push ${{ secrets.DOCKER_USERNAME }}/2025cloud:$IMAGE_TAG
